@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Pulse | The Ultimate Icebreaker</title>
+    <style>
+        :root {
+            --accent: #00ff88;
+            --warning: #ff4757;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .game-shell {
+            background: var(--card);
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            width: 95%;
+            max-width: 800px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .mode-badge {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--accent);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+        #prompt-display {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 30px 0;
+            min-height: 140px;
+            line-height: 1.3;
+            background: linear-gradient(to bottom, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .speaker-box {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            border: 2px solid var(--accent);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+        #current-speaker { font-size: 1.8rem; color: var(--accent); font-weight: bold; }
+        #timer { font-size: 2rem; color: var(--warning); font-family: monospace; font-weight: bold; }
+
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        button {
+            padding: 20px;
+            border-radius: 15px;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .btn-main { background: var(--accent); color: #000; }
+        .btn-main:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(0, 255, 136, 0.4); }
+        .btn-sub { background: #475569; color: white; }
+        
+        #names-input {
+            width: 100%;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid #475569;
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 30px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-shell">
+    <div id="mode-label" class="mode-badge">Setup Phase</div>
+    
+    <div class="speaker-box">
+        <div>
+            <div style="font-size: 0.8rem; opacity: 0.7; text-align: left;">ON THE MIC:</div>
+            <div id="current-speaker">???</div>
+        </div>
+        <div>
+            <div style="font-size: 0.8rem; opacity: 0.7;">CLOCK:</div>
+            <div id="timer">30s</div>
+        </div>
+    </div>
+
+    <div id="prompt-display">Ready to build the team?</div>
+
+    <div class="btn-group">
+        <button class="btn-main" onclick="playTurn()">NEXT TURN 🎲</button>
+        <button class="btn-sub" onclick="toggleMode()">CHANGE GAME 🔄</button>
+    </div>
+
+    <input type="text" id="names-input" placeholder="Type names here (e.g. Alex, Sam, Jordan) to enable the picker...">
+</div>
+
+<script>
+    const games = {
+        "OFFICE ADVENTURES": [
+            "What's your 'guilty pleasure' background music/noise while working?",
+            "What’s the most unusual thing you’ve ever had on your desk?",
+            "If you could delete one corporate buzzword forever, which one is it?",
+            "What’s your secret to surviving a 2-hour meeting?",
+            "What's your 'Final Boss'—the work task you always procrastinate on?",
+            "What was your very first job and what did it teach you?",
+            "Tell us about a time you accidentally sent a message to the wrong person.",
+            "If you were the CEO for one day, what's the first 'fun' rule you'd make?"
+        ],
+        "THE DEBATE CLUB": [
+            "Is a hotdog a sandwich? Defend your life on this.",
+            "Does pineapple belong on pizza? (War is allowed).",
+            "Is it more 'productive' to start work at 6 AM or 10 AM?",
+            "Cereal first or milk first? There is a wrong answer.",
+            "Is 'Die Hard' a Christmas movie? Use logic.",
+            "What is the superior way to eat a potato: Fries, Mashed, or Baked?",
+            "Is it pronounced 'Data' or 'Data'?",
+            "Are there more doors or wheels in the world?"
+        ],
+        "LIFE & VIBES": [
+            "What’s a hobby you have that has absolutely nothing to do with your job?",
+            "If you could be an expert in any skill instantly, what would it be?",
+            "What is the best travel destination you've ever been to?",
+            "What’s the weirdest food you’ve ever tried (and did you like it)?",
+            "What is your 'comfort' movie or TV show you've seen 100 times?",
+            "If you could live in any fictional world (books/movies), which one?",
+            "What’s a hidden talent you have that nobody here knows about?",
+            "What was the last thing you learned that blew your mind?"
+        ],
+        "HYPOTHETICALS": [
+            "If we were all stuck on a deserted island, what would your 'role' be?",
+            "You have to win a reality TV show to save the world. Which show are you picking?",
+            "If you could have any animal as a perfectly trained pet, what is it?",
+            "You find a time machine. Do you go 100 years back or 100 years forward?",
+            "If you were a superhero, what would your minor, semi-useless power be?",
+            "You can only eat one meal for the rest of your life. What is it?",
+            "If you could swap lives with any celebrity for a week, who is it?",
+            "If you were a ghost, who or what would you haunt just for fun?"
+        ]
+    };
+
+    let gameKeys = Object.keys(games);
+    let currentModeIndex = 0;
+    let timerInterval;
+
+    function toggleMode() {
+        currentModeIndex = (currentModeIndex + 1) % gameKeys.length;
+        document.getElementById('mode-label').innerText = gameKeys[currentModeIndex];
+        document.getElementById('prompt-display').innerText = "Mode Switched! Ready for the next speaker.";
+    }
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        let seconds = 30;
+        const timerElement = document.getElementById('timer');
+        timerElement.style.color = 'var(--accent)';
+        timerElement.innerText = seconds + "s";
+
+        timerInterval = setInterval(() => {
+            seconds--;
+            timerElement.innerText = seconds + "s";
+            if (seconds <= 10) timerElement.style.color = 'var(--warning)';
+            if (seconds <= 0) {
+                clearInterval(timerInterval);
+                timerElement.innerText = "TIME UP!";
+            }
+        }, 1000);
+    }
+
+    function playTurn() {
+        const namesInput = document.getElementById('names-input').value;
+        const nameDisplay = document.getElementById('current-speaker');
+        const promptDisplay = document.getElementById('prompt-display');
+        const modeLabel = document.getElementById('mode-label');
+
+        // Pick Speaker
+        if (namesInput.trim() !== "") {
+            const names = namesInput.split(',').map(n => n.trim());
+            nameDisplay.innerText = names[Math.floor(Math.random() * names.length)];
+        } else {
+            nameDisplay.innerText = "Volunteer!";
+        }
+
+        // Pick Prompt
+        const currentMode = gameKeys[currentModeIndex];
+        modeLabel.innerText = currentMode;
+        const currentPrompts = games[currentMode];
+        promptDisplay.innerText = currentPrompts[Math.floor(Math.random() * currentPrompts.length)];
+
+        startTimer();
+    }
+</script>
+
+</body>
+</html>
